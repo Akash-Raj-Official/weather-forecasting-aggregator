@@ -1,5 +1,7 @@
 # Cloud-Native Weather Aggregator
 
+**Live demo:** https://akash-raj-official.github.io/weather-forecasting-aggregator/
+
 A Spring Boot service that aggregates current conditions and the 5-day forecast from the
 OpenWeatherMap API, caches results for 30 minutes, exposes Prometheus metrics, and serves a
 web UI. It is containerised with Docker, and its web UI is published to GitHub Pages by GitHub Actions.
