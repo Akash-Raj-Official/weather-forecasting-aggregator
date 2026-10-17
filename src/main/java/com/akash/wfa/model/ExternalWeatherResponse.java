@@ -1,5 +1,6 @@
 package com.akash.wfa.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.util.List;
 
@@ -10,11 +11,19 @@ public class ExternalWeatherResponse {
     private Coord coord;
     private Wind wind;
     private String name;
+    private Integer timezone; // shift in seconds from UTC
 
     @Data
     public static class Main {
         private Double temp;
+        @JsonProperty("feels_like")
+        private Double feelsLike;
+        @JsonProperty("temp_min")
+        private Double tempMin;
+        @JsonProperty("temp_max")
+        private Double tempMax;
         private Integer humidity;
+        private Integer pressure;
     }
 
     @Data
@@ -31,6 +40,6 @@ public class ExternalWeatherResponse {
 
     @Data
     public static class Wind {
-        private Double speed;
+        private Double speed; // metres per second (units=metric)
     }
 }

@@ -3,7 +3,7 @@
 ## Prerequisites
 ✅ **Java 17 or higher** installed  
 ✅ **Maven** installed  
-✅ **OpenWeatherMap API Key** (already configured in `application.properties`)
+✅ **OpenWeatherMap API Key** set as the `OPENWEATHER_API_KEY` environment variable
 
 ---
 
@@ -12,7 +12,7 @@
 ### 1️⃣ Open Terminal/Command Prompt
 Navigate to the project directory:
 ```bash
-cd "d:\Weather Forcasting Aggregator"
+cd weather-forecasting-aggregator
 ```
 
 ### 2️⃣ Build and Run the Application
@@ -56,7 +56,7 @@ http://localhost:8080
 Point out the three key metrics:
 - 🌬️ **Wind Speed** (real data from API)
 - 💧 **Humidity** (real data from API)
-- ☀️ **UV Index** (mock data)
+- 🧭 **Pressure** (real data from API)
 
 ### Step 5: Demonstrate the Temperature Graph
 - **Show** the smooth line chart showing temperature trends
@@ -65,7 +65,7 @@ Point out the three key metrics:
 
 ### Step 6: Browse the Hourly Forecast
 - **Scroll** through the hourly forecast strip at the bottom
-- **Show** temperature predictions for next 12 hours
+- **Show** temperature predictions for the next 24 hours (3-hour steps)
 - **Highlight** the precipitation probability for each hour
 
 ### Step 7: Toggle Temperature Units
@@ -112,7 +112,7 @@ server.port=8081
 ```
 
 ### Issue: API returns error
-**Solution:** Check your OpenWeatherMap API key in `src/main/resources/application.properties`
+**Solution:** Check that the `OPENWEATHER_API_KEY` environment variable is set to a valid key
 
 ### Issue: City not found
 **Solution:** Try a major city name in English (e.g., "London", "Paris", "Tokyo")

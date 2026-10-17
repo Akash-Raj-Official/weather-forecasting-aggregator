@@ -14,12 +14,19 @@ public class AggregatedWeather {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String cityName;
+    private String searchKey; // normalised user query, used for cache lookups
     private Double latitude;
     private Double longitude;
 
     private Double temperatureCelsius;
-    private Double windSpeed;
+    private Double feelsLikeCelsius;
+    private Double minTemperatureCelsius;
+    private Double maxTemperatureCelsius;
+    private Double windSpeed; // km/h
     private Integer humidityPercentage;
+    private Integer pressureHpa;
     private String conditionSummary; // e.g., "Clear sky", "Rain"
+    private String conditionMain;    // e.g., "Clear", "Rain", "Clouds"
+    private Integer timezoneOffsetSeconds;
     private Instant lastUpdated;
 }
