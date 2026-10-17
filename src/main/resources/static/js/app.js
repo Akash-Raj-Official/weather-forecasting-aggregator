@@ -1,5 +1,7 @@
-// API Configuration
-const API_BASE_URL = '/api/v1/weather';
+// API Configuration — the static site calls the free Open-Meteo APIs directly (no API key needed)
+const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+const HOURLY_SLOTS = 8; // 8 x 3h = next 24 hours
 let currentUnit = 'C'; // C or F
 let currentCity = 'London';
 let lastData = null;  // Last API response, re-rendered when the unit changes
@@ -106,19 +108,92 @@ function handleSearch() {
     }
 }
 
+// WMO weather codes -> [main condition, description]
+function describeCode(code) {
+    if (code === 0) return ['Clear', 'clear sky'];
+    if (code <= 2) return ['Clouds', 'partly cloudy'];
+    if (code === 3) return ['Clouds', 'overcast'];
+    if (code <= 48) return ['Clouds', 'fog'];
+    if (code <= 57) return ['Drizzle', 'drizzle'];
+    if (code <= 67) return ['Rain', code >= 65 ? 'heavy rain' : 'rain'];
+    if (code <= 77) return ['Snow', 'snow'];
+    if (code <= 82) return ['Rain', 'rain showers'];
+    if (code <= 86) return ['Snow', 'snow showers'];
+    return ['Thunderstorm', 'thunderstorm'];
+}
+
+async function getJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error('Unable to fetch weather data right now. Please try again shortly.');
+    }
+    return response.json();
+}
+
+// Looks up the city, then aggregates current conditions + hourly and daily forecast
+async function fetchReport(city) {
+    const geo = await getJson(`${GEOCODING_URL}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+    const place = geo.results && geo.results[0];
+    if (!place) {
+        throw new Error(`City "${city}" not found. Please try another city.`);
+    }
+
+    const params = new URLSearchParams({
+        latitude: place.latitude,
+        longitude: place.longitude,
+        current: 'temperature_2m,apparent_temperature,relative_humidity_2m,pressure_msl,wind_speed_10m,weather_code',
+        hourly: 'temperature_2m,precipitation_probability,weather_code',
+        daily: 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code',
+        timezone: 'auto',
+        forecast_days: '6',
+        wind_speed_unit: 'kmh',
+        timeformat: 'unixtime'
+    });
+    const f = await getJson(`${FORECAST_URL}?${params}`);
+
+    // Hourly: from the current hour onwards, every 3 hours
+    const nowIdx = Math.max(0, f.hourly.time.findIndex(t => t >= f.current.time - 3600));
+    const hourly = [];
+    for (let i = nowIdx; i < f.hourly.time.length && hourly.length < HOURLY_SLOTS; i += 3) {
+        hourly.push({
+            time: f.hourly.time[i],
+            temperature: f.hourly.temperature_2m[i],
+            minTemperature: null,
+            precipitationChance: f.hourly.precipitation_probability[i] ?? 0,
+            condition: describeCode(f.hourly.weather_code[i])[0]
+        });
+    }
+
+    const daily = f.daily.time.map((t, i) => ({
+        time: t + 12 * 3600, // midday, so the weekday label is right in any timezone
+        temperature: f.daily.temperature_2m_max[i],
+        minTemperature: f.daily.temperature_2m_min[i],
+        precipitationChance: f.daily.precipitation_probability_max[i] ?? 0,
+        condition: describeCode(f.daily.weather_code[i])[0]
+    }));
+
+    const [conditionMain, condition] = describeCode(f.current.weather_code);
+    return {
+        city: place.name,
+        temperature: f.current.temperature_2m,
+        feelsLike: f.current.apparent_temperature,
+        high: daily[0].temperature,
+        low: daily[0].minTemperature,
+        windSpeed: f.current.wind_speed_10m,
+        humidity: f.current.relative_humidity_2m,
+        pressure: Math.round(f.current.pressure_msl),
+        condition,
+        conditionMain,
+        timezoneOffset: f.utc_offset_seconds,
+        hourly,
+        daily
+    };
+}
+
 async function fetchWeatherData(city) {
     try {
         showLoading();
-        const response = await fetch(`${API_BASE_URL}?city=${encodeURIComponent(city)}`);
-
-        if (response.status === 404) {
-            throw new Error(`City "${city}" not found. Please try another city.`);
-        }
-        if (!response.ok) {
-            throw new Error('Unable to fetch weather data right now. Please try again shortly.');
-        }
-
-        const data = await response.json();
+        const data = await fetchReport(city);
         currentCity = city;
         lastData = data;
         updateUI(data);
