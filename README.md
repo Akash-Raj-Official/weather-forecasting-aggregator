@@ -36,15 +36,15 @@ docker run -p 8080:8080 -e OPENWEATHER_API_KEY=your_key wfa
 ```
 
 ## Live site (GitHub Pages)
-The web UI is deployed as a static site to GitHub Pages by `.github/workflows/pages.yml`
-on every push to `main`: it runs the backend tests (`mvn verify`), then publishes
-`src/main/resources/static`.
+The web UI is published by GitHub Pages from the `main` branch (Settings → Pages → Deploy from a
+branch → `main` / root). The root `index.html` opens the UI in `src/main/resources/static/`,
+and `404.html` sends old or mistyped links there too.
 
 The static site fetches data directly from the free [Open-Meteo](https://open-meteo.com) geocoding
 and forecast APIs, so it needs no server and no API key. The Spring Boot service above is the
 backend version of the same aggregator and can be run locally or in Docker.
 
-**One-time setup:** repository Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+`.github/workflows/ci.yml` runs the backend tests on every push and pull request.
 
 ## Project structure
 ```
@@ -56,5 +56,6 @@ src/main/java/com/akash/wfa/
 ├── exception/    404 for unknown cities
 └── scheduler/    Optional refresh of popular cities
 src/main/resources/static/   Web UI (static, uses Open-Meteo)
-.github/workflows/pages.yml  CI/CD: tests + GitHub Pages deploy
+index.html, 404.html         GitHub Pages entry points (open the web UI)
+.github/workflows/ci.yml     CI: backend tests
 ```
